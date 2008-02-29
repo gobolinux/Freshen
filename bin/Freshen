@@ -3,11 +3,10 @@
 # Copyright (C) 2007-2008 Michael Homer <=mwh>
 # Distribution terms shown by Freshen --version.
 
-import string, os, os.path, sys, cPickle
-import time
+import string, os, os.path, sys, pickle, time
 sys.path = [os.path.abspath('.')+'/lib/python2.3'] + sys.path
 
-from GetAvailable      import GetAvailable, getGoboVariable
+from GetAvailable      import GetAvailable
 from GuessLatest       import GuessLatest
 from CheckDependencies import *
 from PythonUtils       import *
@@ -363,10 +362,10 @@ class System:
 	@classmethod
 	def saveCache(self, programList, considered, listComplete):
 		f = open(self.cacheFile(), 'w')
-		cPickle.dump(System.cacheDataFormatVersion, f, protocol = cPickle.HIGHEST_PROTOCOL)
-		cPickle.dump(programList, f, protocol = cPickle.HIGHEST_PROTOCOL)
-		cPickle.dump(considered, f, protocol = cPickle.HIGHEST_PROTOCOL)
-		cPickle.dump(listComplete, f, protocol = cPickle.HIGHEST_PROTOCOL)
+		pickle.dump(System.cacheDataFormatVersion, f, protocol = pickle.HIGHEST_PROTOCOL)
+		pickle.dump(programList, f, protocol = pickle.HIGHEST_PROTOCOL)
+		pickle.dump(considered, f, protocol = pickle.HIGHEST_PROTOCOL)
+		pickle.dump(listComplete, f, protocol = pickle.HIGHEST_PROTOCOL)
 		f.close()
 		directory = os.environ.get('HOME') + '/.Settings/freshen_cache/'
 		# Delete expired cache files
@@ -380,12 +379,12 @@ class System:
 		if System.args.forceCache or not System.args.noCache and os.path.exists(cacheFile) and os.path.exists(cacheFile) and time.time()-os.path.getmtime(cacheFile)<1800:
 			Log_Normal("Loading updates list from cache... (use -C to disable)", 'Freshen')
 			f = open(cacheFile, 'r')
-			format = cPickle.load(f)
+			format = pickle.load(f)
 			if format != System.cacheDataFormatVersion:
 				return ([], set(), False)
-			progList = cPickle.load(f)
-			considered = cPickle.load(f)
-			listComplete = cPickle.load(f)
+			progList = pickle.load(f)
+			considered = pickle.load(f)
+			listComplete = pickle.load(f)
 			f.close()
 			return (progList, considered, listComplete)
 		return ([], set(), False)
@@ -397,13 +396,13 @@ class System:
 		if global_available_packages_cache: return
 		elif not System.args.noCache and os.path.exists(cacheFile) and (System.args.forceCache or time.time()-os.path.getmtime(cacheFile)<1800):
 			f = open(cacheFile, 'r')
-			global_available_packages_cache = cPickle.load(f)
+			global_available_packages_cache = pickle.load(f)
 			f.close()
 		else:
 			consoleProgressHook.endString = '\015'
 			global_available_packages_cache = 	GetAvailable(types=['installed','local_package','official_package', 'recipe', 'contrib_package', 'tracked'], hook=consoleProgressHook)
 			f = open(cacheFile, 'w')
-			cPickle.dump(global_available_packages_cache, f, protocol = cPickle.HIGHEST_PROTOCOL)
+			pickle.dump(global_available_packages_cache, f, protocol = pickle.HIGHEST_PROTOCOL)
 			f.close()
 	
 	@classmethod
