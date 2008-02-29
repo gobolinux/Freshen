@@ -28,12 +28,15 @@ class FreshenUI(object):
 	def __init__(self):
 		self.args = FreshenArgParser.FreshenArgParser(self)
 		self.freshen = Freshen.Freshen(self.args)
+		# This is an enormous hack. Only temporary.
+		self.args.freshen = self.freshen
 
 	def showUpdates(self):
 		self.freshen.installedPrograms()
 		systemUpgrades = {'Scripts': None, 'Compile': None, 'Freshen': None}
 		typeCount = {'recipe': 0, 'official_package': 0, '_binary_recipe': 0 ,'total': 0}
-		for program,version,revision,type,url,intBy in self.freshen.updates():
+		pb = ProgressBar(len(self.args.examineSet), self.args.limit)
+		for program,version,revision,type,url,intBy in self.freshen.updates(progressMeter=pb):
 			if typeCount['total']==0: # Only output heading the first time, if there are any.
 				puts("[  ] Program%sInstalled"%(' '*(Screen.width-21)))
 			typeCount[type] += 1
