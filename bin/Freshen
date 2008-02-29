@@ -4,7 +4,6 @@
 # Distribution terms shown by Freshen --version.
 
 import string, os, os.path, sys, pickle, time
-sys.path = [os.path.abspath('.')+'/lib/python2.3'] + sys.path
 
 from GetAvailable      import GetAvailable
 from GuessLatest       import GuessLatest
