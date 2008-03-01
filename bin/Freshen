@@ -45,34 +45,93 @@ class FreshenUI(object):
 		typeCount = {'recipe': 0, 'official_package': 0, '_binary_recipe': 0 ,'total': 0}
 		pb = ProgressBar(len(self.freshen.examineSet), self.freshen.limit)
 		for program,version,revision,type,url,intBy,enabledFlags,disabledFlags in self.freshen.updates(progressMeter=pb):
-			if typeCount['total']==0: # Only output heading the first time, if there are any.
+			# Only output heading the first time, if there are any.
+			if typeCount['total']==0:
 				puts("[  ] Program%sInstalled"%(' '*(Screen.width-21)))
+			# Keep track of how many of each type and in total there are
 			typeCount[type] += 1
 			typeCount['total'] += 1
+			
 			ver = Join_Version_Revision(version, revision)
+			
+			# Remember if there are updates to system tools
 			if program in systemUpgrades: systemUpgrades[program] = type
+			
+			# Initialise default values (uninstalled program)
 			insVer = "None"
 			pcol = Screen.colours['darkgreybg']
+			
 			insVer = str(self.freshen.latestInstalled(program))
 			if insVer != 'None':
 				pcol = ''
 			if pcol == '':
+				# Alternate colouring by row for easier reading
 				if typeCount['total']%2==0:
 					pcol=Screen.colours['blue']
 				else:
 					pcol=Screen.colours['cyan']
+			
 			typeAbbr = getTypeAbbr(type)
+			
+			# Flag binary recipes
 			if version.endswith('_bin') or program.endswith('-Bin'):
 				typeAbbr = Screen.colours['red']+'B'+Screen.colours['normal']+typeAbbr
 				typeCount['_binary_recipe'] += 1
 			else: typeAbbr = ' ' + typeAbbr
+			
+			# Display which program has this as a dependency if it isn't already installed
 			introducedByString = insVer == 'None' and '(' + intBy + ')' or ''
+			
 			normalColour = Screen.colours['normal']
-			enabledFlagString = reduce(lambda fs, flag: fs+'+'+flag+' ', enabledFlags, ' ')
-			disabledFlagString = reduce(lambda fs, flag: fs+'-'+flag+' ', disabledFlags, '')
-			flagString = Screen.colours['green'] + enabledFlagString + Screen.colours['red'] + disabledFlagString + Screen.colours['normal']
-			pad = " " * (Screen.width-len(program)-len(ver)-len(insVer)-len(introducedByString)-7-len(enabledFlagString)-len(disabledFlagString))
-			out = "[%s] %s%s %s %s%s%s%s%s"%(typeAbbr, pcol, program, ver, introducedByString, flagString, pad, insVer, normalColour)
+			
+			# Perform output: flags are wrapped vertically when they don't fit on one line
+			# The physical length of output must be tracked, which is different to the
+			# string length because of colours
+			maxlen = Screen.width - 10
+			out = "[%s] %s%s %s %s " % (typeAbbr, pcol, program, ver, introducedByString)
+			# outlen will be updated, minlen is used to pad wrapped text to line up
+			outlen = len(program) + len(ver) + len(introducedByString) + 8
+			minlen = outlen
+			# Whether the installed version has been output or not
+			insverout = False
+			for flag in enabledFlags:
+				# Do we need to wrap yet?
+				if outlen + len(flag) + 2 < maxlen:
+					outlen += len(flag) + 2
+					out += Screen.colours['green'] + '+' + flag + ' '
+				else:
+					# If the current version hasn't been output (i.e. this is the first
+					# line), tack it onto the end with the right padding to force it
+					# against the margin.
+					if not insverout:
+						insverout = True
+						out += pcol + ' '*(Screen.width-outlen-len(insVer)) + insVer
+					puts(out)
+					# Initialise the padding for the next line to vertically line up with
+					# the first flag.
+					out = ' ' * minlen
+					outlen = len(out)
+			# Now the same thing for disabled flags
+			for flag in disabledFlags:
+				if outlen + len(flag) + 2 < maxlen:
+					outlen += len(flag) + 2
+					out += Screen.colours['red'] + '+' + flag + ' '
+				else:
+					if not insverout:
+						insverout = True
+						out += pcol + ' '*(Screen.width-outlen-len(insVer)) + insVer
+					puts(out)
+					out = ' ' * minlen
+					outlen = len(out)
+			
+			out += pcol
+			# It's possible that the version hasn't been output yet; if not, do it.
+			if not insverout:
+				print outlen
+				print len(insVer)
+				print (Screen.width-outlen-len(insVer))
+				insverout = True
+				out += ' '*(Screen.width-outlen-len(insVer)) + insVer
 			puts(out)
 		puts("%(recipe)i recipes, %(_binary_recipe)i binary recipes, %(official_package)i packages, %(total)i total"%typeCount)
 		for prog in ('Scripts', 'Compile', 'Freshen'):
