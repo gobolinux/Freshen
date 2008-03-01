@@ -159,10 +159,14 @@ class FreshenUI(object):
 	--exclude, -x <xlist>
 		Exclude <xlist> from updating. Does not exclude other programs depending
 		on <xlist>.
+	--install
+		Install <list> without upgrading any dependencies.
 	--force-cache, -c
 		Force using cached updates data, rather than recalculating them.
 	--no-cache, -C
 		Force regenerating updates data, rather than reading from cache.
+	--shallow, -s
+		Only include <list> and necessary dependencies.
 	--thorough
 		Include deep updates to revisions and up-to-date dependencies.
 	-U
