@@ -41,30 +41,34 @@ class FreshenUI(object):
 			interfaceCallbacks['log_normal'] = self.log
 			interfaceCallbacks['error'] = self.error
 			interfaceCallbacks['loading_updates_from_cache'] = functools.partial(self.log, "Loading updates list from cache... (use -C to disable)")
-			self.freshen = Freshen.Freshen(mode=self.args.mode, examineSet=self.args.examineSet, limit=self.args.limit, skipSet=self.args.skipSet, noCache=self.args.noCache, forceCache=self.args.forceCache, interfaceCallbacks=interfaceCallbacks)
+			self.freshen = Freshen.Freshen(mode=self.args.mode, examineSet=self.args.examineSet, limit=int(self.args.limit), skipSet=self.args.skipSet, noCache=self.args.noCache, forceCache=self.args.forceCache, interfaceCallbacks=interfaceCallbacks)
 		
 	def showUpdates(self):
 		self.initFreshen()
 		systemUpgrades = {'Scripts': None, 'Compile': None, 'Freshen': None}
 		typeCount = {'recipe': 0, 'official_package': 0, '_binary_recipe': 0 ,'total': 0}
 		pb = ProgressBar(len(self.freshen.examineSet)+1, self.freshen.limit)
-		for update in self.freshen.updates(progressMeter=pb):
-			# Only output heading the first time, if there are any.
-			if typeCount['total']==0:
-				puts("[  ] Program%sInstalled"%(' '*(Screen.width-21)))
-			# Keep track of how many of each type and in total there are
-			typeCount[update[3]] += 1
-			typeCount['total'] += 1
-			
-			# Remember if there are updates to system tools
-			if update[0] in systemUpgrades: systemUpgrades[update[0]] = type
-			
-			self.outProg(update, typeCount)
-		puts("%(recipe)i recipes, %(_binary_recipe)i binary recipes, %(official_package)i packages, %(total)i total"%typeCount)
-		for prog in ('Scripts', 'Compile', 'Freshen'):
-			if systemUpgrades[prog]:
-				cmd = systemUpgrades[prog] == 'recipe' and 'Compile' or 'InstallPackage'
-				Log_Error("An upgrade to %s is available. It is strongly recommended that you upgrade immediately with `%s %s`."%(prog, cmd, prog), 'Freshen')
+		try:
+			for update in self.freshen.updates(progressMeter=pb):
+				# Only output heading the first time, if there are any.
+				if typeCount['total']==0:
+					puts("[  ] Program%sInstalled"%(' '*(Screen.width-21)))
+				# Keep track of how many of each type and in total there are
+				typeCount[update[3]] += 1
+				typeCount['total'] += 1
+				
+				# Remember if there are updates to system tools
+				if update[0] in systemUpgrades: systemUpgrades[update[0]] = type
+				
+				self.outProg(update, typeCount)
+		except Freshen.CacheWarning, err:
+			Log_Error(err.message, 'Freshen')
+		finally:
+			puts("%(recipe)i recipes, %(_binary_recipe)i binary recipes, %(official_package)i packages, %(total)i total"%typeCount)
+			for prog in ('Scripts', 'Compile', 'Freshen'):
+				if systemUpgrades[prog]:
+					cmd = systemUpgrades[prog] == 'recipe' and 'Compile' or 'InstallPackage'
+					Log_Error("An upgrade to %s is available. It is strongly recommended that you upgrade immediately with `%s %s`."%(prog, cmd, prog), 'Freshen')
 	
 	def outProg(self, update, typeCount=None):
 		program,version,revision,type,url,intBy,enabledFlags,disabledFlags = update
@@ -164,7 +168,6 @@ class FreshenUI(object):
 		t = Template(string.split('=', 2)[1])
 		return t.safe_substitute(variableDefinitions)
 	
-	# TODO: Handle failed installations
 	def installUpdates(self):
 		self.initFreshen()
 		i=0
@@ -193,6 +196,8 @@ class FreshenUI(object):
 		except Freshen.InstallationError, err:
 			Log_Error("There was an error installing %s.\nThe update process will terminate.\nPlease review the errors above for details about the problem."%(err.program))
 			error = err
+		except Freshen.CacheWarning, err:
+			Log_Error(err.message, 'Freshen')
 		finally:
 			for program,version,revision,type,url,intBy,enabledFlags,disabledFlags in ulist:
 				if os.system("UpdateSettings -c" + program):
