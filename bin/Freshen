@@ -32,15 +32,20 @@ class FreshenUI(object):
 		interfaceCallbacks['loading_updates_from_cache'] = functools.partial(self.log, "Loading updates list from cache... (use -C to disable)")
 		
 		self.args = FreshenArgParser.FreshenArgParser(self)
-		self.freshen = Freshen.Freshen(mode=self.args.mode, examineSet=self.args.examineSet, limit=self.args.limit, skipSet=self.args.skipSet, noCache=self.args.noCache, forceCache=self.args.forceCache, interfaceCallbacks=interfaceCallbacks)
+		self.freshen = None
 
 	def error(self, message):
 		Log_Error(message, 'Freshen')
 	
 	def log(self, message):
 		Log_Normal(message, 'Freshen')
-
+	
+	def initFreshen(self):
+		if not self.freshen:
+			self.freshen = Freshen.Freshen(mode=self.args.mode, examineSet=self.args.examineSet, limit=self.args.limit, skipSet=self.args.skipSet, noCache=self.args.noCache, forceCache=self.args.forceCache, interfaceCallbacks=interfaceCallbacks)
+		
 	def showUpdates(self):
+		self.initFreshen()
 		systemUpgrades = {'Scripts': None, 'Compile': None, 'Freshen': None}
 		typeCount = {'recipe': 0, 'official_package': 0, '_binary_recipe': 0 ,'total': 0}
 		pb = ProgressBar(len(self.freshen.examineSet), self.freshen.limit)
@@ -165,6 +170,7 @@ class FreshenUI(object):
 	
 	# TODO: Handle failed installations
 	def installUpdates(self):
+		self.initFreshen()
 		i=0
 		postMessages = []
 		programs = set()
@@ -219,7 +225,7 @@ class FreshenUI(object):
 	
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-	"""%(self.freshen.version))
+	"""%(Freshen.version))
 	
 	def showHelp(self):
 		puts("""
@@ -259,13 +265,37 @@ class FreshenUI(object):
 	Freshen -x LibFoo LibBar -U Baz Quux
 	"""%Screen.colours)
 
-ui = FreshenUI()
 
 try:
+	ui = FreshenUI()
 	# Execute the defined action
 	ui.args.action()
 	exit(0)
 except KeyboardInterrupt:
 	pass
+except SystemExit:
+	pass
+except IOError, e:
+	import errno
+	if e.errno in [errno.EINVAL, errno.EPIPE]:
+		pass
+	else:
+		raise
+except BaseException:
+	import traceback
+	ex_type, ex_obj, ex_tb = sys.exc_info()
+	sys.stderr.write("Freshen: ERROR: %s.%s: %s\n"% (ex_type.__module__, ex_type.__name__, ex_obj))
+	sys.stderr.write('\n')
+	traceback.print_exception(ex_type, ex_obj, ex_tb)
+	sys.stderr.write('\n')
+	sys.stderr.write('Freshen %(major)s.%(minor)s.%(revision)s%(prerelease)s'%(Freshen.version))
+	sys.stderr.write(' on python ' + '.'.join(map(str, sys.version_info)) + '\n')
+	sys.stderr.write('arguments: %r\n\n'%(sys.argv))
+	sys.stderr.write("""
+*** Freshen has encountered an internal error. Please send this report to
+    gobolinux-users@lists.gobolinux.org with a description of what you were
+	doing when the error occurred.
+""")
+
 finally: # Clear title on exit
 	sys.stderr.write("\033]2;\007");
