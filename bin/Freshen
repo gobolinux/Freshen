@@ -3,7 +3,7 @@
 # Copyright (C) 2007-2008 Michael Homer <=mwh>
 # Distribution terms shown by Freshen --version.
 
-import string, os, os.path, sys, pickle, time
+import string, os, os.path, sys, pickle, time, functools
 
 from GetAvailable      import GetAvailable
 from GuessLatest       import GuessLatest
@@ -26,11 +26,21 @@ def puts(string):
 
 class FreshenUI(object):
 	def __init__(self):
+		interfaceCallbacks = dict()
+		interfaceCallbacks['log_normal'] = self.log
+		interfaceCallbacks['log_error'] = self.error
+		interfaceCallbacks['loading_updates_from_cache'] = functools.partial(self.log, "Loading updates list from cache... (use -C to disable)")
+		
 		self.args = FreshenArgParser.FreshenArgParser(self)
-		self.freshen = Freshen.Freshen(mode=self.args.mode, examineSet=self.args.examineSet, limit=self.args.limit, skipSet=self.args.skipSet, noCache=self.args.noCache, forceCache=self.args.forceCache)
+		self.freshen = Freshen.Freshen(mode=self.args.mode, examineSet=self.args.examineSet, limit=self.args.limit, skipSet=self.args.skipSet, noCache=self.args.noCache, forceCache=self.args.forceCache, interfaceCallbacks=interfaceCallbacks)
+
+	def error(self, message):
+		Log_Error(message, 'Freshen')
+	
+	def log(self, message):
+		Log_Normal(message, 'Freshen')
 
 	def showUpdates(self):
-		self.freshen.installedPrograms()
 		systemUpgrades = {'Scripts': None, 'Compile': None, 'Freshen': None}
 		typeCount = {'recipe': 0, 'official_package': 0, '_binary_recipe': 0 ,'total': 0}
 		pb = ProgressBar(len(self.freshen.examineSet), self.freshen.limit)
