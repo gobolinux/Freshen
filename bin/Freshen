@@ -44,7 +44,7 @@ class FreshenUI(object):
 		systemUpgrades = {'Scripts': None, 'Compile': None, 'Freshen': None}
 		typeCount = {'recipe': 0, 'official_package': 0, '_binary_recipe': 0 ,'total': 0}
 		pb = ProgressBar(len(self.freshen.examineSet), self.freshen.limit)
-		for program,version,revision,type,url,intBy in self.freshen.updates(progressMeter=pb):
+		for program,version,revision,type,url,intBy,enabledFlags,disabledFlags in self.freshen.updates(progressMeter=pb):
 			if typeCount['total']==0: # Only output heading the first time, if there are any.
 				puts("[  ] Program%sInstalled"%(' '*(Screen.width-21)))
 			typeCount[type] += 1
@@ -68,8 +68,11 @@ class FreshenUI(object):
 			else: typeAbbr = ' ' + typeAbbr
 			introducedByString = insVer == 'None' and '(' + intBy + ')' or ''
 			normalColour = Screen.colours['normal']
-			pad = " " * (Screen.width-len(program)-len(ver)-len(insVer)-len(introducedByString)-7)
-			out = "[%s] %s%s %s %s%s%s%s"%(typeAbbr, pcol, program, ver, introducedByString, pad, insVer, normalColour)
+			enabledFlagString = reduce(lambda fs, flag: fs+'+'+flag+' ', enabledFlags, ' ')
+			disabledFlagString = reduce(lambda fs, flag: fs+'-'+flag+' ', disabledFlags, '')
+			flagString = Screen.colours['green'] + enabledFlagString + Screen.colours['red'] + disabledFlagString + Screen.colours['normal']
+			pad = " " * (Screen.width-len(program)-len(ver)-len(insVer)-len(introducedByString)-7-len(enabledFlagString)-len(disabledFlagString))
+			out = "[%s] %s%s %s %s%s%s%s%s"%(typeAbbr, pcol, program, ver, introducedByString, flagString, pad, insVer, normalColour)
 			puts(out)
 		puts("%(recipe)i recipes, %(_binary_recipe)i binary recipes, %(official_package)i packages, %(total)i total"%typeCount)
 		for prog in ('Scripts', 'Compile', 'Freshen'):
@@ -101,7 +104,7 @@ class FreshenUI(object):
 		i=0
 		postMessages = []
 		programs = set()
-		for program,version,revision,type,url,intBy in self.freshen.updates():
+		for program,version,revision,type,url,intBy,enabledFlags,disabledFlags in self.freshen.updates():
 			i+=1
 			programs.add(program)
 			ver = Join_Version_Revision(version, revision)
@@ -196,3 +199,4 @@ except KeyboardInterrupt:
 	pass
 finally: # Clear title on exit
 	sys.stderr.write("\033]2;\007");
+exit(0)
