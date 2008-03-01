@@ -129,7 +129,7 @@ class FreshenUI(object):
 		for flag in disabledFlags:
 			if outlen + len(flag) + 2 < maxlen:
 				outlen += len(flag) + 2
-				out += Screen.colours['red'] + '+' + flag + ' '
+				out += Screen.colours['red'] + '-' + flag + ' '
 			else:
 				if not insverout:
 					insverout = True
