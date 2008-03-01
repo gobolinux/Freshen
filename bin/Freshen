@@ -170,36 +170,38 @@ class FreshenUI(object):
 		i=0
 		postMessages = []
 		programs = set()
-		error = False
+		error = None
 		ulist = []
-		for update in self.freshen.updates():
-			program,version,revision,type,url,intBy,enabledFlags,disabledFlags = update
-			i+=1
-			programs.add(program)
-			ver = Join_Version_Revision(version, revision)
-			Log_Normal("Installing update %i: %s %s..."%(i, program, ver), 'Freshen')
-			self.outProg(update)
-			error = self.freshen.installUpdate(update)
-			if error:
-				break
-			ulist.append(update)
-			rec = os.popen('GetRecipe %s %s'%(program, ver)).readline().strip()+'/Recipe'
-			if os.path.exists(rec):
-				file = open(rec, 'r')
-				for line in file:
-					if line.startswith('post_install_message='):
-						postMessages.append((program, parse_var(line, {'target': '$goboPrograms/%s/%s' % (program,version)})))
-						break
-				file.close()
-
-		for program,version,revision,type,url,intBy,enabledFlags,disabledFlags in ulist:
-			if os.system("UpdateSettings -c" + program):
-				os.system("UpdateSettings -a "+program)
-		if postMessages:
-			Log_Normal("Some of the installed programs requested post-install messages be displayed:")
-			for program,message in postMessages:
-				puts("%s: %s"%(program, message))
-		self.freshen.clearCache()
+		try:
+			for update in self.freshen.updates():
+				program,version,revision,type,url,intBy,enabledFlags,disabledFlags = update
+				i+=1
+				programs.add(program)
+				ver = Join_Version_Revision(version, revision)
+				Log_Normal("Installing update %i: %s %s..."%(i, program, ver), 'Freshen')
+				self.outProg(update)
+				self.freshen.installUpdate(update)
+				ulist.append(update)
+				rec = os.popen('GetRecipe %s %s'%(program, ver)).readline().strip()+'/Recipe'
+				if os.path.exists(rec):
+					file = open(rec, 'r')
+					for line in file:
+						if line.startswith('post_install_message='):
+							postMessages.append((program, parse_var(line, {'target': '$goboPrograms/%s/%s' % (program,version)})))
+							break
+					file.close()
+		except Freshen.InstallationError, err:
+			Log_Error("There was an error installing %s.\nThe update process will terminate.\nPlease review the errors above for details about the problem."%(err.program))
+			error = err
+		finally:
+			for program,version,revision,type,url,intBy,enabledFlags,disabledFlags in ulist:
+				if os.system("UpdateSettings -c" + program):
+					os.system("UpdateSettings -a "+program)
+			if postMessages:
+				Log_Normal("Some of the installed programs requested post-install messages be displayed:")
+				for program,message in postMessages:
+					puts("%s: %s"%(program, message))
+			self.freshen.clearCache()
 		if error:
 			Log_Error("Because there was an error in installation, not all of your updates may have been installed. You should review the error messages above for details.")
 			exit(1)
