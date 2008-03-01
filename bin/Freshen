@@ -210,60 +210,62 @@ class FreshenUI(object):
 	
 	def showVersion(self):
 		puts("""
-	Freshen %(major)i.%(minor)i.%(revision)i%(prerelease)s
-	(C) 2007-2008 Michael Homer <=mwh>
-	
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-	
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-	
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-	"""%(Freshen.version))
+Freshen %(major)i.%(minor)i.%(revision)i%(prerelease)s
+(C) 2007-2008 Michael Homer <=mwh>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""%(Freshen.version))
 	
 	def showHelp(self):
 		puts("""
-	Checks for updated GoboLinux recipes and packages.
-	
-	Usage: Freshen [<opts>] [<list>]
-	
-	Options:
-	--exclude, -x <xlist>
-		Exclude <xlist> from updating. Does not exclude other programs depending
-		on <xlist>.
-	--install
-		Install <list> without upgrading any dependencies.
-	--force-cache, -c
-		Force using cached updates data, rather than recalculating them.
-	--no-cache, -C
-		Force regenerating updates data, rather than reading from cache.
-	--shallow, -s
-		Only include <list> and necessary dependencies.
-	--thorough
-		Include deep updates to revisions and up-to-date dependencies.
-	-U
-		Install updates.
-	--version
-		Display version and copyright information.
-	Notes:
-	Run with no arguments, Freshen outputs a list of updates in the form:
-	[%(red)sB%(green)sR%(normal)s] Foo 2.0                                                                 1.0
-	The mnemonics mean:
-	%(green)sR%(normal)s Recipe will be used                    %(brown)sNew program%(normal)s
-	%(brown)sP%(normal)s Package will be used                   Other colours are for readability only
-	%(red)sB%(normal)s Binary recipe
-	
-	If <list> is provided, Freshen examines only the programs in it and their dependencies. If <list> is not provided, Freshen will examine all installed programs.
-	
-	Examples:
-	Freshen -x LibFoo LibBar -U Baz Quux
-	"""%Screen.colours)
+Checks for updated GoboLinux recipes and packages.
+
+Usage: Freshen [<opts>] [<list>]
+
+Options:
+--exclude, -x <xlist>
+	Exclude <xlist> from updating. Does not exclude other programs depending
+	on <xlist>.
+--install
+	Install <list> without upgrading any dependencies.
+--force-cache, -c
+	Force using cached updates data, rather than recalculating them.
+--no-cache, -C
+	Force regenerating updates data, rather than reading from cache.
+--shallow, -s
+	Only include <list> and necessary dependencies.
+--thorough
+	Include deep updates to revisions and up-to-date dependencies.
+-U
+	Install updates.
+--version
+	Display version and copyright information.
+Notes:
+Run with no arguments, Freshen outputs a list of updates in the form:
+[%(red)sB%(green)sR%(normal)s] Foo 2.0                                                                 1.0
+The mnemonics mean:
+%(green)sR%(normal)s Recipe will be used                    %(brown)sNew program%(normal)s
+%(brown)sP%(normal)s Package will be used                   Other colours are for readability only
+%(red)sB%(normal)s Binary recipe
+
+If <list> is provided, Freshen examines only the programs in it and their
+dependencies. If <list> is not provided, Freshen will examine all installed
+programs.
+
+Examples:
+Freshen -x LibFoo LibBar -U Baz Quux
+"""%Screen.colours)
 
 
 try:
