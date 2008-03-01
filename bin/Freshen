@@ -28,7 +28,7 @@ class FreshenUI(object):
 	def __init__(self):
 		interfaceCallbacks = dict()
 		interfaceCallbacks['log_normal'] = self.log
-		interfaceCallbacks['log_error'] = self.error
+		interfaceCallbacks['error'] = self.error
 		interfaceCallbacks['loading_updates_from_cache'] = functools.partial(self.log, "Loading updates list from cache... (use -C to disable)")
 		
 		self.args = FreshenArgParser.FreshenArgParser(self)
@@ -62,7 +62,7 @@ class FreshenUI(object):
 				cmd = systemUpgrades[prog] == 'recipe' and 'Compile' or 'InstallPackage'
 				Log_Error("An upgrade to %s is available. It is strongly recommended that you upgrade immediately with `%s %s`."%(prog, cmd, prog), 'Freshen')
 	
-	def outProg(self, update, typeCount):
+	def outProg(self, update, typeCount=None):
 		program,version,revision,type,url,intBy,enabledFlags,disabledFlags = update
 		ver = Join_Version_Revision(version, revision)
 		
@@ -75,7 +75,7 @@ class FreshenUI(object):
 			pcol = ''
 		if pcol == '':
 			# Alternate colouring by row for easier reading
-			if typeCount['total']%2==0:
+			if typeCount and typeCount['total']%2==0:
 				pcol=Screen.colours['blue']
 			else:
 				pcol=Screen.colours['cyan']
@@ -168,27 +168,29 @@ class FreshenUI(object):
 		i=0
 		postMessages = []
 		programs = set()
-		for program,version,revision,type,url,intBy,enabledFlags,disabledFlags in self.freshen.updates():
+		error = False
+		ulist = []
+		for update in self.freshen.updates():
+			program,version,revision,type,url,intBy,enabledFlags,disabledFlags = update
 			i+=1
 			programs.add(program)
 			ver = Join_Version_Revision(version, revision)
 			Log_Normal("Installing update %i: %s %s..."%(i, program, ver), 'Freshen')
-			if type == 'recipe':
-				os.system("Compile -G -U -D -b %s"%(url))
-				rec = os.popen('GetRecipe %s %s'%(program, ver)).readline().strip()+'/Recipe'
-				if os.path.exists(rec):
-					file = open(rec, 'r')
-					for line in file:
-						if line.startswith('post_install_message='):
-							postMessages.append((program, parse_var(line, {'target': '$goboPrograms/%s/%s' % (program,version)})))
-							break
-					file.close()
-			elif type == 'official_package':
-				os.system("InstallPackage -k -U -s keep -b -D -u keep %s"%(url))
-			else:
-				Log_Error("Unknown action '%s'!"%(type))
-				exit()
-		for program,version,revision,type,url,intBy in ulist:
+			self.outProg(update)
+			error = self.freshen.installUpdate(update)
+			if error:
+				break
+			ulist.append(update)
+			rec = os.popen('GetRecipe %s %s'%(program, ver)).readline().strip()+'/Recipe'
+			if os.path.exists(rec):
+				file = open(rec, 'r')
+				for line in file:
+					if line.startswith('post_install_message='):
+						postMessages.append((program, parse_var(line, {'target': '$goboPrograms/%s/%s' % (program,version)})))
+						break
+				file.close()
+
+		for program,version,revision,type,url,intBy,enabledFlags,disabledFlags in ulist:
 			if os.system("UpdateSettings -c" + program):
 				os.system("UpdateSettings -a "+program)
 		if postMessages:
@@ -196,6 +198,9 @@ class FreshenUI(object):
 			for program,message in postMessages:
 				puts("%s: %s"%(program, message))
 		self.freshen.clearCache()
+		if error:
+			Log_Error("Because there was an error in installation, not all of your updates may have been installed. You should review the error messages above for details.")
+			exit(1)
 	
 	def showVersion(self):
 		puts("""
@@ -259,8 +264,8 @@ ui = FreshenUI()
 try:
 	# Execute the defined action
 	ui.args.action()
+	exit(0)
 except KeyboardInterrupt:
 	pass
 finally: # Clear title on exit
 	sys.stderr.write("\033]2;\007");
-exit(0)
