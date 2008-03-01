@@ -37,11 +37,7 @@ class FreshenUI(object):
 	
 	def initFreshen(self):
 		if not self.freshen:
-			interfaceCallbacks = dict()
-			interfaceCallbacks['log_normal'] = self.log
-			interfaceCallbacks['error'] = self.error
-			interfaceCallbacks['loading_updates_from_cache'] = functools.partial(self.log, "Loading updates list from cache... (use -C to disable)")
-			self.freshen = Freshen.Freshen(mode=self.args.mode, examineSet=self.args.examineSet, limit=int(self.args.limit), skipSet=self.args.skipSet, noCache=self.args.noCache, forceCache=self.args.forceCache, interfaceCallbacks=interfaceCallbacks)
+			self.freshen = Freshen.Freshen(mode=self.args.mode, examineSet=self.args.examineSet, limit=int(self.args.limit), skipSet=self.args.skipSet, noCache=self.args.noCache, forceCache=self.args.forceCache)
 		
 	def showUpdates(self):
 		self.initFreshen()
