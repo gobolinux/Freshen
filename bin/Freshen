@@ -37,7 +37,7 @@ class FreshenUI(object):
 	
 	def initFreshen(self):
 		if not self.freshen:
-			self.freshen = Freshen.Freshen(mode=self.args.mode, examineSet=self.args.examineSet, limit=int(self.args.limit), skipSet=self.args.skipSet, noCache=self.args.noCache, forceCache=self.args.forceCache)
+			self.freshen = Freshen.Freshen(mode=self.args.mode, examineSet=self.args.examineSet, limit=self.args.limit, skipSet=self.args.skipSet, noCache=self.args.noCache, forceCache=self.args.forceCache)
 		
 	def showUpdates(self):
 		self.initFreshen()
