@@ -290,6 +290,23 @@ Examples:
 Freshen -x LibFoo LibBar -U Baz Quux
 """%Screen.colours)
 
+def reportBug(exc_info):
+	import traceback
+	ex_type, ex_obj, ex_tb = exc_info
+	Log_Error("ERROR: %s.%s: %s"% (ex_type.__module__, ex_type.__name__, ex_obj), 'Freshen')
+	sys.stderr.write('\n')
+	traceback.print_exception(ex_type, ex_obj, ex_tb)
+	sys.stderr.write('\n')
+	sys.stderr.write('Freshen %(major)s.%(minor)s.%(revision)s%(prerelease)s'%(Freshen.version))
+	sys.stderr.write(' on python ' + '.'.join(map(str, sys.version_info)) + '\n')
+	sys.stderr.write('arguments: %r\n'%(sys.argv))
+	sys.stderr.write(Screen.colours['red'])
+	sys.stderr.write("""
+*** Freshen has encountered an internal error. Please send this report to
+    gobolinux-users@lists.gobolinux.org with a description of what you were
+    doing when the error occurred.
+""")
+	sys.stderr.write(Screen.colours['normal'])
 
 try:
 	ui = FreshenUI()
@@ -302,25 +319,12 @@ except SystemExit:
 	pass
 except IOError, e:
 	import errno
-	if e.errno in [errno.EINVAL, errno.EPIPE]:
+	if e.errno in (errno.EINVAL, errno.EPIPE):
 		sys.stderr.write("Freshen: broken pipe")
 	else:
-		raise
+		reportBug(sys.exc_info())
 except BaseException:
-	import traceback
-	ex_type, ex_obj, ex_tb = sys.exc_info()
-	sys.stderr.write("Freshen: ERROR: %s.%s: %s\n"% (ex_type.__module__, ex_type.__name__, ex_obj))
-	sys.stderr.write('\n')
-	traceback.print_exception(ex_type, ex_obj, ex_tb)
-	sys.stderr.write('\n')
-	sys.stderr.write('Freshen %(major)s.%(minor)s.%(revision)s%(prerelease)s'%(Freshen.version))
-	sys.stderr.write(' on python ' + '.'.join(map(str, sys.version_info)) + '\n')
-	sys.stderr.write('arguments: %r\n\n'%(sys.argv))
-	sys.stderr.write("""
-*** Freshen has encountered an internal error. Please send this report to
-    gobolinux-users@lists.gobolinux.org with a description of what you were
-	doing when the error occurred.
-""")
+	reportBug(sys.exc_info())
 
 finally: # Clear title on exit
 	sys.stderr.write("\033]2;\007");
