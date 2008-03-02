@@ -25,6 +25,8 @@ def puts(string):
 	sys.stdout.write(string+'\n')
 
 class FreshenUI(object):
+	goboPrograms = getGoboVariable('goboPrograms')
+	
 	def __init__(self):
 		self.args = FreshenArgParser.FreshenArgParser(self)
 		self.freshen = None
@@ -56,7 +58,12 @@ class FreshenUI(object):
 				# Remember if there are updates to system tools
 				if update[0] in systemUpgrades: systemUpgrades[update[0]] = type
 				
-				self.outProg(update, typeCount)
+				if update[3] == 'recipe' and self.freshen.latestInstalled(update[0]) and os.path.exists(self.goboPrograms + '/' + update[0] + '/Current/Resources/UseFlags'):
+					currentFlags = set(open(self.goboPrograms + '/' + update[0] + '/Current/Resources/UseFlags').readline().split())
+				else:
+					currentFlags = set()
+				
+				self.outProg(update, typeCount, currentFlags)
 		except Freshen.CacheWarning, err:
 			Log_Error(err.message, 'Freshen')
 		finally:
@@ -66,7 +73,7 @@ class FreshenUI(object):
 					cmd = systemUpgrades[prog] == 'recipe' and 'Compile' or 'InstallPackage'
 					Log_Error("An upgrade to %s is available. It is strongly recommended that you upgrade immediately with `%s %s`."%(prog, cmd, prog), 'Freshen')
 	
-	def outProg(self, update, typeCount=None):
+	def outProg(self, update, typeCount=None, currentFlags=set()):
 		program,version,revision,type,url,intBy,enabledFlags,disabledFlags = update
 		ver = Join_Version_Revision(version, revision)
 		
@@ -112,7 +119,11 @@ class FreshenUI(object):
 			# Do we need to wrap yet?
 			if outlen + len(flag) + 2 < maxlen:
 				outlen += len(flag) + 2
-				out += Screen.colours['green'] + '+' + flag + ' '
+				if not currentFlags or flag in currentFlags:
+					out += Screen.colours['green']
+				else:
+					out += Screen.colours['brightgreen']
+				out += '+' + flag + ' '
 			else:
 				# If the current version hasn't been output (i.e. this is the first
 				# line), tack it onto the end with the right padding to force it
@@ -129,7 +140,11 @@ class FreshenUI(object):
 		for flag in disabledFlags:
 			if outlen + len(flag) + 2 < maxlen:
 				outlen += len(flag) + 2
-				out += Screen.colours['red'] + '-' + flag + ' '
+				if flag in currentFlags:
+					out += Screen.colours['red']
+				else:
+					out += Screen.colours['blue']
+				out += '-' + flag + ' '
 			else:
 				if not insverout:
 					insverout = True
