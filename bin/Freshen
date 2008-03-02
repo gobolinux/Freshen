@@ -230,26 +230,35 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 		puts("""
 Checks for updated GoboLinux recipes and packages.
 
-Usage: Freshen [<opts>] [<list>]
+Usage: Freshen <mode> [<opts>] [<list>]
+
+Modes:
+(default)
+	Display list of updates.
+--help
+	This help text.
+--install
+	Install <list> without upgrading any dependencies (equivalent to -U -s)
+-U
+	Install updates.
+--version
+	Display version and copyright information.
 
 Options:
 --exclude, -x <xlist>
 	Exclude <xlist> from updating. Does not exclude other programs depending
 	on <xlist>.
---install
-	Install <list> without upgrading any dependencies.
 --force-cache, -c
 	Force using cached updates data, rather than recalculating them.
+--limit, -l <n>
+	Only include the first <n> updates.
 --no-cache, -C
 	Force regenerating updates data, rather than reading from cache.
 --shallow, -s
 	Only include <list> and necessary dependencies.
 --thorough
 	Include deep updates to revisions and up-to-date dependencies.
--U
-	Install updates.
---version
-	Display version and copyright information.
+
 Notes:
 Run with no arguments, Freshen outputs a list of updates in the form:
 [%(red)sB%(green)sR%(normal)s] Foo 2.0                                                                 1.0
