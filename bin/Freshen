@@ -64,8 +64,9 @@ class FreshenUI(object):
 					currentFlags = set()
 				
 				self.outProg(update, typeCount, currentFlags)
-		except Freshen.CacheWarning, err:
-			Log_Error(err.message, 'Freshen')
+		except Freshen.CacheWarning:
+			exc_type, exc_obj, exc_tb = sys.exc_info()
+			Log_Error(exc_obj.message, 'Freshen')
 		finally:
 			puts("%(recipe)i recipes, %(_binary_recipe)i binary recipes, %(official_package)i packages, %(total)i total"%typeCount)
 			for prog in ('Scripts', 'Compile', 'Freshen'):
@@ -204,11 +205,13 @@ class FreshenUI(object):
 							postMessages.append((program, parse_var(line, {'target': '$goboPrograms/%s/%s' % (program,version)})))
 							break
 					file.close()
-		except Freshen.InstallationError, err:
-			Log_Error("There was an error installing %s.\nThe update process will terminate.\nPlease review the errors above for details about the problem."%(err.program))
-			error = err
-		except Freshen.CacheWarning, err:
-			Log_Error(err.message, 'Freshen')
+		except Freshen.InstallationError:
+			exc_type, exc_obj, exc_tb = sys.exc_info()
+			Log_Error("There was an error installing %s.\nThe update process will terminate.\nPlease review the errors above for details about the problem."%(exc_obj.program))
+			error = exc_obj
+		except Freshen.CacheWarning:
+			exc_type, exc_obj, exc_tb = sys.exc_info()
+			Log_Error(exc_obj.message, 'Freshen')
 		finally:
 			for program,version,revision,type,url,intBy,enabledFlags,disabledFlags in ulist:
 				if os.system("UpdateSettings -c" + program):
@@ -317,9 +320,10 @@ except KeyboardInterrupt:
 	pass
 except SystemExit:
 	pass
-except IOError, e:
+except IOError:
+	exc_type, exc_obj, exc_tb = sys.exc_info()
 	import errno
-	if e.errno in (errno.EINVAL, errno.EPIPE):
+	if exc_obj.errno in (errno.EINVAL, errno.EPIPE):
 		sys.stderr.write("Freshen: broken pipe")
 	else:
 		reportBug(sys.exc_info())
