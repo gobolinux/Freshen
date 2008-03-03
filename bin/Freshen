@@ -59,7 +59,10 @@ class FreshenUI(object):
 				if update[0] in systemUpgrades: systemUpgrades[update[0]] = type
 				
 				if update[3] == 'recipe' and self.freshen.latestInstalled(update[0]) and os.path.exists(self.goboPrograms + '/' + update[0] + '/Current/Resources/UseFlags'):
-					currentFlags = set(open(self.goboPrograms + '/' + update[0] + '/Current/Resources/UseFlags').readline().split())
+					try:
+						currentFlags = set(open(self.goboPrograms + '/' + update[0] + '/Current/Resources/UseFlags').readline().split())
+					except:
+						Log_Error('Resources/UseFlags data file for installed %s exists but is not readable.'%(update[0]), 'Freshen')
 				else:
 					currentFlags = set()
 				
