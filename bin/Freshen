@@ -47,8 +47,7 @@ class FreshenUI(object):
 		typeCount = {'recipe': 0, 'official_package': 0, '_binary_recipe': 0 ,'total': 0}
 		pb = ProgressBar(len(self.freshen.examineSet)+1, self.freshen.limit, True)
 		try:
-			for update in self.freshen.updates(progressMeter=pb):
-				# Only output heading the first time, if there are any.
+			for update in self.freshen.updates(onExamine=pb.inc): # Only output heading the first time, if there are any.
 				if typeCount['total']==0:
 					puts("[  ] Program%sInstalled"%(' '*(Screen.width-21)))
 				# Keep track of how many of each type and in total there are
@@ -67,10 +66,13 @@ class FreshenUI(object):
 					currentFlags = set()
 				
 				self.outProg(update, typeCount, currentFlags)
+				pb.inc2()
+				if typeCount['total'] == self.freshen.limit: break
 		except Freshen.CacheWarning:
 			exc_type, exc_obj, exc_tb = sys.exc_info()
 			Log_Error(exc_obj.message, 'Freshen')
 		finally:
+			pb.clear()
 			puts("%(recipe)i recipes, %(_binary_recipe)i binary recipes, %(official_package)i packages, %(total)i total"%typeCount)
 			for prog in ('Scripts', 'Compile', 'Freshen'):
 				if systemUpgrades[prog]:
