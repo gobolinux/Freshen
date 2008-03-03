@@ -185,6 +185,7 @@ class FreshenUI(object):
 				i+=1
 				programs.add(program)
 				ver = Join_Version_Revision(version, revision)
+				sys.stderr.write("\033]2;Installing update %i: %s %s\007" % (i, program, ver));
 				Log_Normal("Installing update %i: %s %s..."%(i, program, ver), 'Freshen')
 				self.outProg(update)
 				self.freshen.installUpdate(update)
@@ -197,6 +198,8 @@ class FreshenUI(object):
 							postMessages.append((program, parse_var(line, {'target': '$goboPrograms/%s/%s' % (program,version)})))
 							break
 					file.close()
+				if i == self.limit:
+					break
 		except Freshen.InstallationError:
 			exc_type, exc_obj, exc_tb = sys.exc_info()
 			Log_Error("There was an error installing %s.\nThe update process will terminate.\nPlease review the errors above for details about the problem."%(exc_obj.program))
@@ -206,7 +209,7 @@ class FreshenUI(object):
 			Log_Error(exc_obj.message, 'Freshen')
 		finally:
 			for program,version,revision,type,url,intBy,enabledFlags,disabledFlags in ulist:
-				if os.system("UpdateSettings -c" + program):
+				if os.system("UpdateSettings -c " + program):
 					os.system("UpdateSettings -a "+program)
 			if postMessages:
 				Log_Normal("Some of the installed programs requested post-install messages be displayed:")
