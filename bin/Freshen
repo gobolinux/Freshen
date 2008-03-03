@@ -29,6 +29,7 @@ class FreshenUI(object):
 	
 	def __init__(self):
 		self.args = FreshenArgParser.FreshenArgParser(self)
+		self.limit = self.args.limit
 		self.freshen = None
 
 	def error(self, message):
@@ -39,15 +40,17 @@ class FreshenUI(object):
 	
 	def initFreshen(self):
 		if not self.freshen:
-			self.freshen = Freshen.Freshen(mode=self.args.mode, examineSet=self.args.examineSet, limit=self.args.limit, skipSet=self.args.skipSet, noCache=self.args.noCache, forceCache=self.args.forceCache)
+			self.freshen = Freshen.Freshen(mode=self.args.mode, examineSet=self.args.examineSet, skipSet=self.args.skipSet, noCache=self.args.noCache, forceCache=self.args.forceCache)
 		
 	def showUpdates(self):
 		self.initFreshen()
 		systemUpgrades = {'Scripts': None, 'Compile': None, 'Freshen': None}
 		typeCount = {'recipe': 0, 'official_package': 0, '_binary_recipe': 0 ,'total': 0}
-		pb = ProgressBar(len(self.freshen.examineSet)+1, self.freshen.limit, True)
+		pb = ProgressBar(len(self.freshen.examineSet)+1, self.limit, True)
 		try:
-			for update in self.freshen.updates(onExamine=pb.inc): # Only output heading the first time, if there are any.
+			updates = self.freshen.updates(onExamine=pb.inc)
+			for update in updates:
+				# Only output heading the first time, if there are any.
 				if typeCount['total']==0:
 					puts("[  ] Program%sInstalled"%(' '*(Screen.width-21)))
 				# Keep track of how many of each type and in total there are
@@ -67,7 +70,7 @@ class FreshenUI(object):
 				
 				self.outProg(update, typeCount, currentFlags)
 				pb.inc2()
-				if typeCount['total'] == self.freshen.limit: break
+				if typeCount['total'] == self.limit: break
 		except Freshen.CacheWarning:
 			exc_type, exc_obj, exc_tb = sys.exc_info()
 			Log_Error(exc_obj.message, 'Freshen')
@@ -131,7 +134,7 @@ class FreshenUI(object):
 					out += Screen.colours['brightgreen']
 				out += '+' + flag + ' '
 			else:
-				# If the current version hasn't been output (i.e. this is the first
+				# If the current version hasn't been outputted (i.e. this is the first
 				# line), tack it onto the end with the right padding to force it
 				# against the margin.
 				if not insverout:
