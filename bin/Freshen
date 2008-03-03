@@ -45,7 +45,7 @@ class FreshenUI(object):
 		self.initFreshen()
 		systemUpgrades = {'Scripts': None, 'Compile': None, 'Freshen': None}
 		typeCount = {'recipe': 0, 'official_package': 0, '_binary_recipe': 0 ,'total': 0}
-		pb = ProgressBar(len(self.freshen.examineSet)+1, self.freshen.limit)
+		pb = ProgressBar(len(self.freshen.examineSet)+1, self.freshen.limit, True)
 		try:
 			for update in self.freshen.updates(progressMeter=pb):
 				# Only output heading the first time, if there are any.
