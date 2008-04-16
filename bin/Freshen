@@ -3,7 +3,13 @@
 # Copyright (C) 2007-2008 Michael Homer <=mwh>
 # Distribution terms shown by Freshen --version.
 
-import string, os, os.path, sys, pickle, time, functools
+import string
+import os
+import os.path
+import sys
+import pickle
+import time
+import  functools
 
 from GetAvailable      import GetAvailable
 from GuessLatest       import GuessLatest
@@ -17,7 +23,8 @@ import FreshenArgParser
 def getTypeAbbr(type):
 	return {
 		'recipe': Screen.colours['green']+'R'+Screen.colours['normal'],
-		'official_package': Screen.colours['brown']+'P'+Screen.colours['normal'],
+		'official_package': (Screen.colours['brown'] + 'P'
+		                     + Screen.colours['normal']),
 		'installed': 'I',
 		None: '?'
 	}[type]
@@ -40,13 +47,23 @@ class FreshenUI(object):
 	
 	def initFreshen(self):
 		if not self.freshen:
-			self.freshen = Freshen.Freshen(mode=self.args.mode, examineSet=self.args.examineSet, skipSet=self.args.skipSet, noCache=self.args.noCache, forceCache=self.args.forceCache, types=self.args.types)
+			self.freshen = Freshen.Freshen(mode=self.args.mode,
+			                               examineSet=self.args.examineSet,
+			                               skipSet=self.args.skipSet,
+			                               noCache=self.args.noCache,
+			                               forceCache=self.args.forceCache,
+			                               types=self.args.types)
 		
 	def showUpdates(self):
 		self.initFreshen()
 		systemUpgrades = {'Scripts': None, 'Compile': None, 'Freshen': None}
-		typeCount = {'recipe': 0, 'official_package': 0, '_binary_recipe': 0 ,'total': 0}
-		pb = ProgressBar(len(self.freshen.examineSet)+1, self.limit, True)
+		typeCount = {
+			'recipe': 0,
+			'official_package': 0,
+			'_binary_recipe': 0 ,
+			'total': 0
+			}
+		pb = ProgressBar(len(self.freshen.examineSet) + 1, self.limit, True)
 		try:
 			updates = self.freshen.updates(onExamine=pb.inc)
 			for update in updates:
@@ -58,13 +75,24 @@ class FreshenUI(object):
 				typeCount['total'] += 1
 				
 				# Remember if there are updates to system tools
-				if update[0] in systemUpgrades: systemUpgrades[update[0]] = type
+				if update[0] in systemUpgrades:
+					systemUpgrades[update[0]] = type
 				
-				if update[3] == 'recipe' and self.freshen.latestInstalled(update[0]) and os.path.exists(self.goboPrograms + '/' + update[0] + '/Current/Resources/UseFlags'):
+				if (update[3] == 'recipe' and
+					self.freshen.latestInstalled(update[0])
+					and os.path.exists(self.goboPrograms + '/'
+										+ update[0] +
+										'/Current/Resources/UseFlags')):
 					try:
-						currentFlags = set(open(self.goboPrograms + '/' + update[0] + '/Current/Resources/UseFlags').readline().split())
+						currentFlags = set(open(
+												self.goboPrograms +
+												'/' + update[0] +
+												'/Current/Resources/UseFlags')
+											.readline().split())
 					except:
-						Log_Error('Resources/UseFlags data file for installed %s exists but is not readable.'%(update[0]), 'Freshen')
+						Log_Error('Resources/UseFlags data file for '
+						          'installed %s exists but is not '
+								  'readable.' % (update[0]), 'Freshen')
 				else:
 					currentFlags = set()
 				
@@ -76,13 +104,20 @@ class FreshenUI(object):
 			Log_Error(exc_obj.message, 'Freshen')
 		finally:
 			pb.clear()
-			puts("%(recipe)i recipes, %(_binary_recipe)i binary recipes, %(official_package)i packages, %(total)i total"%typeCount)
+			puts("%(recipe)i recipes, %(_binary_recipe)i binary recipes, "
+			     "%(official_package)i packages, %(total)i total" % typeCount)
 			for prog in ('Scripts', 'Compile', 'Freshen'):
 				if systemUpgrades[prog]:
-					cmd = systemUpgrades[prog] == 'recipe' and 'Compile' or 'InstallPackage'
-					Log_Error("An upgrade to %s is available. It is strongly recommended that you upgrade immediately with `%s %s`."%(prog, cmd, prog), 'Freshen')
+					if 'recipe' == systemUpgrades[prog]:
+						cmd = 'Compile'
+					else:
+						cmd = 'InstallPackage'
+					Log_Error("An upgrade to %s is available. It is strongly"
+					          "recommended that you upgrade immediately with"
+							  " `%s %s`."%(prog, cmd, prog), 'Freshen')
 	
-	def outFlag(self, flag, signal, currentFlags, currentlyEnabledColour, currentlyDisabledColour):
+	def outFlag(self, flag, signal, currentFlags, currentlyEnabledColour,
+		        currentlyDisabledColour):
 		out = ''
 		if not currentFlags or flag in currentFlags:
 			out += currentlyEnabledColour
@@ -92,7 +127,8 @@ class FreshenUI(object):
 		return out
 		
 	def outProg(self, update, typeCount=None, currentFlags=set()):
-		program,version,revision,type,url,intBy,enabledFlags,disabledFlags = update
+		(program, version, revision, type, url, intBy, enabledFlags,
+		 disabledFlags) = update
 		ver = Join_Version_Revision(version, revision)
 		
 		# Initialise default values (uninstalled program)
@@ -111,27 +147,34 @@ class FreshenUI(object):
 		
 		# Flag binary recipes
 		if version.endswith('_bin') or program.endswith('-Bin'):
-			typeAbbr = Screen.colours['red']+'B'+Screen.colours['normal']+typeAbbr
+			typeAbbr = (Screen.colours['red'] + 'B' +
+			            Screen.colours['normal'] + typeAbbr)
 			typeCount['_binary_recipe'] += 1
 		else: typeAbbr = ' ' + typeAbbr
 		
-		# Display which program has this as a dependency if it isn't already installed
+		# Display which program has this as a dependency if it isn't
+		# already installed.
 		introducedByString = insVer == 'None' and '(' + intBy + ')' or ''
 		
-		# Perform output: flags are wrapped vertically when they don't fit on one line
-		# The physical length of output must be tracked, which is different to the
-		# string length because of colours
+		# Perform output. Flags are wrapped vertically when they don't
+		# fit on one line.
+		# The physical length of output must be tracked, which is
+		# different to the string length because of colours
 		maxlen = Screen.width - 10
-		out = "[%s] %s%s %s %s " % (typeAbbr, pcol, program, ver, introducedByString)
-		# outlen will be updated, minlen is used to pad wrapped text to line up
+		out = "[%s] %s%s %s %s " % (typeAbbr, pcol, program, ver, 
+		                            introducedByString)
+		# outlen will be updated, minlen is used to pad wrapped text so
+		# that it lines up.
 		outlen = len(program) + len(ver) + len(introducedByString) + 8
 		minlen = outlen
 		# Whether the installed version has been output or not
 		insverout = False
 		out+= Screen.colours['normal']
 		for flags, sig, enCol, disCol in (
-			(enabledFlags, '+', Screen.colours['green'], Screen.colours['brightgreen']),
-			(disabledFlags, '-', Screen.colours['red'], Screen.colours['blue']),
+				(enabledFlags, '+', Screen.colours['green'],
+				 Screen.colours['brightgreen']),
+				(disabledFlags, '-', Screen.colours['red'],
+				 Screen.colours['blue']),
 			):
 			for flag in flags:
 				# Do we need to wrap yet?
@@ -139,10 +182,12 @@ class FreshenUI(object):
 					# If this is the first line, pad out and output the version
 					if not insverout:
 						insverout = True
-						out += pcol + ' '*(Screen.width-outlen-len(insVer)) + insVer+Screen.colours['normal']
+						out += (pcol + ' ' *
+						        (Screen.width - outlen - len(insVer)) +
+								insVer + Screen.colours['normal'])
 					puts(out)
-					# Initialise the padding for the next line to vertically line up with
-					# the first flag.
+					# Initialise the padding for the next line to
+					# vertically line up with the first flag.
 					out = ' ' * minlen
 					outlen = len(out)
 				outlen += len(flag) + 2
@@ -153,7 +198,8 @@ class FreshenUI(object):
 			out += pcol + ' '*(Screen.width-outlen-len(insVer)) + insVer
 		puts(out+Screen.colours['normal'])
 
-	# Parse the value of a shell variable out of a file (recipe), performing variable substitutions.
+	# Parse the value of a shell variable out of a file (recipe),
+	# performing variable substitutions.
 	def parse_var(string, variableDefinitions=None):
 		from string import Template
 		if not hasattr(parse_var, 'definitions'):
@@ -168,7 +214,8 @@ class FreshenUI(object):
 		variableDefinitions.update(parse_var.variableDefinitions)
 		for variable in variableDefinitions:
 			t = Template(variableDefinitions[variable])
-			variableDefinitions[variable] = t.safe_substitute(variableDefinitions)
+			variableDefinitions[variable] = \
+				t.safe_substitute(variableDefinitions)
 		t = Template(string.split('=', 2)[1])
 		return t.safe_substitute(variableDefinitions)
 	
@@ -181,43 +228,63 @@ class FreshenUI(object):
 		ulist = []
 		try:
 			for update in self.freshen.updates():
-				program,version,revision,type,url,intBy,enabledFlags,disabledFlags = update
+				(program, version, revision, type, url, intBy, enabledFlags,
+					disabledFlags) = update
 				i+=1
 				programs.add(program)
 				ver = Join_Version_Revision(version, revision)
-				sys.stderr.write("\033]2;Installing update %i: %s %s\007" % (i, program, ver));
-				Log_Normal("Installing update %i: %s %s..."%(i, program, ver), 'Freshen')
+				sys.stderr.write("\033]2;Installing update %i: %s %s\007" %
+				                 (i, program, ver))
+				Log_Normal("Installing update %i: %s %s..." %
+				           (i, program, ver),
+						   'Freshen')
 				self.outProg(update)
 				self.freshen.installUpdate(update)
 				ulist.append(update)
-				rec = os.popen('GetRecipe %s %s'%(program, ver)).readline().strip()+'/Recipe'
+				rec = (os.popen('GetRecipe %s %s' % (program, ver))
+				       .readline().strip() + '/Recipe')
 				if os.path.exists(rec):
 					file = open(rec, 'r')
 					for line in file:
 						if line.startswith('post_install_message='):
-							postMessages.append((program, parse_var(line, {'target': '$goboPrograms/%s/%s' % (program,version)})))
+							postMessages.append((program,
+								parse_var(line,
+										  {'target': '$goboPrograms/%s/%s' %
+										              (program,version)
+										  }
+									)
+								)
+							)
 							break
 					file.close()
 				if i == self.limit:
 					break
 		except Freshen.InstallationError:
 			exc_type, exc_obj, exc_tb = sys.exc_info()
-			Log_Error("There was an error installing %s.\nThe update process will terminate.\nPlease review the errors above for details about the problem."%(exc_obj.program))
+			Log_Error("There was an error installing %s.\n"
+			          "The update process will terminate.\n"
+			          "Please review the errors above for details about"
+			          " the problem." % (exc_obj.program))
 			error = exc_obj
 		except Freshen.CacheWarning:
 			exc_type, exc_obj, exc_tb = sys.exc_info()
 			Log_Error(exc_obj.message, 'Freshen')
 		finally:
-			for program,version,revision,type,url,intBy,enabledFlags,disabledFlags in ulist:
+			for (program, version, revision, type, url, intBy,
+				 enabledFlags, disabledFlags) in ulist:
 				if os.system("UpdateSettings -c " + program):
 					os.system("UpdateSettings -a "+program)
 			if postMessages:
-				Log_Normal("Some of the installed programs requested post-install messages be displayed:")
+				Log_Normal("Some of the installed programs requested "
+				           "post-install messages be displayed:")
 				for program,message in postMessages:
 					puts("%s: %s"%(program, message))
 			self.freshen.clearCache()
 		if error:
-			Log_Error("Because there was an error in installation, not all of your updates may have been installed. You should review the error messages above for details.")
+			Log_Error("Because there was an error in installation, not "
+			          "all of your updates may have been installed. "
+					  "You should review the error messages above for "
+					  "details.")
 			exit(1)
 	
 	def showVersion(self):
@@ -293,12 +360,16 @@ Freshen -x LibFoo LibBar -U Baz Quux
 def reportBug(exc_info):
 	import traceback
 	ex_type, ex_obj, ex_tb = exc_info
-	Log_Error("ERROR: %s.%s: %s"% (ex_type.__module__, ex_type.__name__, ex_obj), 'Freshen')
+	Log_Error("ERROR: %s.%s: %s" %
+	          (ex_type.__module__, ex_type.__name__, ex_obj),
+			  'Freshen')
 	sys.stderr.write('\n')
 	traceback.print_exception(ex_type, ex_obj, ex_tb)
 	sys.stderr.write('\n')
-	sys.stderr.write('Freshen %(major)s.%(minor)s.%(revision)s%(prerelease)s'%(Freshen.version))
-	sys.stderr.write(' on python ' + '.'.join(map(str, sys.version_info)) + '\n')
+	sys.stderr.write('Freshen %(major)s.%(minor)s.%(revision)s%(prerelease)s' %
+	                 (Freshen.version))
+	sys.stderr.write(' on python ' +
+	                 '.'.join(map(str, sys.version_info)) + '\n')
 	sys.stderr.write('arguments: %r\n'%(sys.argv))
 	sys.stderr.write(Screen.colours['red'])
 	sys.stderr.write("""
