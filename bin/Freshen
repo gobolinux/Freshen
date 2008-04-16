@@ -252,6 +252,8 @@ Modes:
 	This help text.
 --install
 	Install <list> without upgrading any dependencies (equivalent to -U -s)
+--unordered
+	Don't order updates or resolve dependencies.
 -U
 	Install updates.
 --version
