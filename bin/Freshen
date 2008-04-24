@@ -247,11 +247,16 @@ class FreshenUI(object):
 				i += 1
 				programs.add(program)
 				ver = Join_Version_Revision(version, revision)
-				sys.stderr.write("\033]2;Installing update %i: %s %s\007" %
-				                 (i, program, ver))
-				Log_Normal("Installing update %i: %s %s..." %
-				           (i, program, ver),
-						   'Freshen')
+				msg = "Installing update %i: %s %s" % (i, program, ver)
+				# If the list was loaded from cache and is complete
+				# (meaning the standard review-then-install method
+				# was used), we know how many there are and can give
+				# a better message.
+				if self.freshen.updateCount:
+					msg = "Installing update %i/%i: %s %s" % \
+					       (i, self.freshen.updateCount, program, ver)
+				sys.stderr.write("\033]2;%s\007" % (msg))
+				Log_Normal(msg, 'Freshen')
 				self.outProg(update)
 				self.freshen.installUpdate(update)
 				ulist.append(update)
