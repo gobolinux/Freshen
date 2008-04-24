@@ -338,8 +338,10 @@ Modes:
 	Display list of updates.
 --help
 	This help text.
---install
-	Install <list> without upgrading any dependencies (equivalent to -U -s)
+--install, -i
+	Install <list> without upgrading any dependencies (equivalent to -U -s).
+	When <list> is empty, install the updates produced by the last run of
+	Freshen, to allow a simple review/install process.
 --unordered
 	Don't order updates or resolve dependencies.
 -U
@@ -376,6 +378,10 @@ programs.
 
 Examples:
 Freshen -x LibFoo LibBar -U Baz Quux
+
+Review/install pair:
+ Freshen HTTPD PHP
+ Freshen -i
 """ % Screen.colours)
 
 def reportBug(exc_info):
