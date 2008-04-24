@@ -240,8 +240,10 @@ class FreshenUI(object):
 		programs = set()
 		error = None
 		ulist = []
+		if 'missing' == self.args.mode and not self.args.examineSet:
+			last = True
 		try:
-			for update in self.freshen.updates():
+			for update in self.freshen.updates(last=last):
 				(program, version, revision, type, url, intBy, enabledFlags,
 					disabledFlags) = update
 				i += 1
