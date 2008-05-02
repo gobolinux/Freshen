@@ -21,7 +21,6 @@ import os.path
 import sys
 import pickle
 import time
-import functools
 
 from GetAvailable      import GetAvailable
 from GuessLatest       import GuessLatest
@@ -126,7 +125,7 @@ class FreshenUI(object):
 						cmd = 'Compile'
 					else:
 						cmd = 'InstallPackage'
-					Log_Error("An upgrade to %s is available. It is strongly"
+					Log_Error("An upgrade to %s is available. It is strongly "
 					          "recommended that you upgrade immediately with"
 							  " `%s %s`."%(prog, cmd, prog), 'Freshen')
 
