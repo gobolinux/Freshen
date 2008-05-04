@@ -162,7 +162,7 @@ class FreshenUI(object):
 		if version.endswith('_bin') or program.endswith('-Bin'):
 			typeAbbr = (Screen.colours['red'] + 'B' +
 			            Screen.colours['normal'] + typeAbbr)
-			typeCount['_binary_recipe'] += 1
+			if typeCount: typeCount['_binary_recipe'] += 1
 		else: typeAbbr = ' ' + typeAbbr
 		
 		# Display which program has this as a dependency if it isn't
