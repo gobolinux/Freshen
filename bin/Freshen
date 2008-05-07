@@ -89,7 +89,7 @@ class FreshenUI(object):
 				
 				# Remember if there are updates to system tools
 				if update[0] in systemUpgrades:
-					systemUpgrades[update[0]] = type
+					systemUpgrades[update[0]] = update[3]
 				
 				if (update[3] == 'recipe' and
 					self.freshen.latestInstalled(update[0])
