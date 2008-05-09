@@ -141,7 +141,7 @@ class FreshenUI(object):
 
 	def outProg(self, update, typeCount=None, currentFlags=set()):
 		(program, version, revision, type, url, intBy, enabledFlags,
-		 disabledFlags) = update
+		 disabledFlags, activeFlags) = update
 		ver = Join_Version_Revision(version, revision)
 		
 		# Initialise default values (uninstalled program)
@@ -165,6 +165,8 @@ class FreshenUI(object):
 			if typeCount: typeCount['_binary_recipe'] += 1
 		else: typeAbbr = ' ' + typeAbbr
 		
+		if intBy and activeFlags:
+			intBy += ': +' + ', +'.join(activeFlags)
 		# Display which program has this as a dependency if it isn't
 		# already installed.
 		introducedByString = insVer == 'None' and '(' + intBy + ')' or ''
@@ -243,7 +245,7 @@ class FreshenUI(object):
 		try:
 			for update in self.freshen.updates(last=last):
 				(program, version, revision, type, url, intBy, enabledFlags,
-					disabledFlags) = update
+					disabledFlags, activeFlags) = update
 				i += 1
 				programs.add(program)
 				ver = Join_Version_Revision(version, revision)
@@ -290,7 +292,7 @@ class FreshenUI(object):
 			Log_Error(exc_obj.message, 'Freshen')
 		finally:
 			for (program, version, revision, type, url, intBy,
-				 enabledFlags, disabledFlags) in ulist:
+				 enabledFlags, disabledFlags, activeFlags) in ulist:
 				if os.system("UpdateSettings -c " + program):
 					os.system("UpdateSettings -a " + program)
 			if postMessages:
