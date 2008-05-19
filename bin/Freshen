@@ -50,6 +50,7 @@ class FreshenUI(object):
 		self.args = FreshenArgParser.FreshenArgParser(self)
 		self.limit = self.args.limit
 		self.freshen = None
+		self.initTime = time.time()
 
 	def error(self, message):
 		Log_Error(message, 'Freshen')
@@ -117,8 +118,10 @@ class FreshenUI(object):
 			Log_Error(exc_obj.message, 'Freshen')
 		finally:
 			pb.clear()
+			typeCount['time'] = time.time() - self.initTime
 			puts("%(recipe)i recipes, %(_binary_recipe)i binary recipes, "
-			     "%(official_package)i packages, %(total)i total" % typeCount)
+			     "%(official_package)i packages, %(total)i total "
+				 "in %(time).2f seconds" % typeCount)
 			for prog in ('Scripts', 'Compile', 'Freshen'):
 				if systemUpgrades[prog]:
 					if 'recipe' == systemUpgrades[prog]:
