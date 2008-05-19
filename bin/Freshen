@@ -401,6 +401,7 @@ Review/install pair:
 
 def reportBug(exc_info):
 	import traceback
+	import re
 	ex_type, ex_obj, ex_tb = exc_info
 	Log_Error("ERROR: %s.%s: %s" %
 	          (ex_type.__module__, ex_type.__name__, ex_obj),
@@ -412,6 +413,17 @@ def reportBug(exc_info):
 	                 (Freshen.version))
 	sys.stderr.write(' on python ' +
 	                 '.'.join(map(str, sys.version_info)) + '\n')
+	compileVersion = 'unknown'
+	scriptsVersion = 'unknown'
+	try:
+		compileVersion = re.sub('^Compile/([^/]+)/', 
+		                        os.popen('which Compile').read()).groups()[0]
+		scriptsVersion = re.sub('^Scripts/([^/]+)/', 
+		                        os.popen('which UseFlags').read()).groups()[0]
+	except:
+		pass
+	sys.stderr.write('with Scripts %s and Compile %s\n\n' %
+		(scriptsVersion,compileVersion))
 	sys.stderr.write('arguments: %r\n'%(sys.argv))
 	sys.stderr.write(Screen.colours['red'])
 	sys.stderr.write("""
