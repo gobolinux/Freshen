@@ -32,16 +32,21 @@ import Freshen
 import FreshenArgParser
 
 def getTypeAbbr(type):
-	return {
+	try:
+		return getTypeAbbr.dict[type]
+	except:
+		getTypeAbbr.dict= {
 		'recipe': Screen.colours['green']+'R'+Screen.colours['normal'],
 		'official_package': (Screen.colours['brown'] + 'P'
 		                     + Screen.colours['normal']),
 		'installed': 'I',
 		None: '?'
-	}[type]
+	}
+		return getTypeAbbr.dict[type]
 
 def puts(string):
-	sys.stdout.write(string + '\n')
+	sys.stdout.write(string)
+	sys.stdout.write('\n')
 
 class FreshenUI(object):
 	goboPrograms = getGoboVariable('goboPrograms')
@@ -134,13 +139,15 @@ class FreshenUI(object):
 
 	def outFlag(self, flag, signal, currentFlags, currentlyEnabledColour,
 		        currentlyDisabledColour):
-		out = ''
+		outs = None
 		if not currentFlags or flag in currentFlags:
-			out += currentlyEnabledColour
+			outs = [currentlyEnabledColour]
 		else:
-			out += currentlyDisabledColour
-		out += signal + flag + ' '
-		return out
+			outs = [currentlyDisabledColour]
+		outs.append(signal)
+		outs.append(flag)
+		outs.append(' ')
+		return ''.join(outs)
 
 	def outProg(self, update, typeCount=None, currentFlags=set()):
 		(program, version, revision, type, url, intBy, enabledFlags,
@@ -179,15 +186,16 @@ class FreshenUI(object):
 		# The physical length of output must be tracked, which is
 		# different to the string length because of colours
 		maxlen = Screen.width - 10
-		out = "[%s] %s%s %s %s " % (typeAbbr, pcol, program, ver, 
-		                            introducedByString)
+		outs = []
+		outs.append("[%s] %s%s %s %s " % (typeAbbr, pcol, program, ver,
+		                                  introducedByString))
 		# outlen will be updated, minlen is used to pad wrapped text so
 		# that it lines up.
 		outlen = len(program) + len(ver) + len(introducedByString) + 8
 		minlen = outlen
 		# Whether the installed version has been output or not
 		insverout = False
-		out+= Screen.colours['normal']
+		outs.append(Screen.colours['normal'])
 		for flags, sig, enCol, disCol in (
 				(enabledFlags, '+', Screen.colours['green'],
 				 Screen.colours['brightgreen']),
@@ -200,21 +208,25 @@ class FreshenUI(object):
 					# If this is the first line, pad out and output the version
 					if not insverout:
 						insverout = True
-						out += (pcol + ' ' *
-						        (Screen.width - outlen - len(insVer)) +
-								insVer + Screen.colours['normal'])
-					puts(out)
+						outs.append(pcol)
+						outs.append(' ' * (Screen.width - outlen -
+						                   len(insVer)))
+						outs.append(insVer + Screen.colours['normal'])
 					# Initialise the padding for the next line to
 					# vertically line up with the first flag.
-					out = ' ' * minlen
-					outlen = len(out)
+					outs.append('\n')
+					outs.append(' ' * minlen)
+					outlen = minlen
 				outlen += len(flag) + 2
-				out += self.outFlag(flag, sig, currentFlags, enCol, disCol)
+				outs.append(self.outFlag(flag, sig, currentFlags, enCol,
+				                         disCol))
 		
 		# It's possible this is still the first line; if so, output the version
 		if not insverout:
-			out += pcol + ' ' * (Screen.width-outlen-len(insVer)) + insVer
-		puts(out + Screen.colours['normal'])
+			outs.append(pcol)
+			outs.append(' ' * (Screen.width-outlen-len(insVer)))
+			outs.append(insVer)
+		puts(''.join(outs) + Screen.colours['normal'])
 
 	# Parse the value of a shell variable out of a file (recipe),
 	# performing variable substitutions.
