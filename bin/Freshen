@@ -416,9 +416,9 @@ def reportBug(exc_info):
 	compileVersion = 'unknown'
 	scriptsVersion = 'unknown'
 	try:
-		compileVersion = re.sub('^Compile/([^/]+)/', 
+		compileVersion = re.search('Compile/([^/]+)/', 
 		                        os.popen('which Compile').read()).groups()[0]
-		scriptsVersion = re.sub('^Scripts/([^/]+)/', 
+		scriptsVersion = re.search('Scripts/([^/]+)/', 
 		                        os.popen('which UseFlags').read()).groups()[0]
 	except:
 		pass
@@ -434,6 +434,7 @@ def reportBug(exc_info):
 	sys.stderr.write(Screen.colours['normal'])
 
 try:
+	raise Exception("test")
 	ui = FreshenUI()
 	# Execute the defined action
 	ui.args.action()
