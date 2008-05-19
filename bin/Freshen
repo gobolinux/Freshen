@@ -434,7 +434,14 @@ def reportBug(exc_info):
 	sys.stderr.write(Screen.colours['normal'])
 
 try:
-	raise Exception("test")
+	goboPrograms = getGoboVariable('goboPrograms')
+	for (prog, ver) in Freshen.requiredVersions.items():
+		cur = os.readlink(goboPrograms + '/' + prog + '/Current')
+		if 'svn' not in cur.lower() and \
+			GuessLatest([cur, ver]) != cur:
+			Log_Error("requires %s >= %s"%(prog,ver), 'Freshen')
+			exit(1)
+
 	ui = FreshenUI()
 	# Execute the defined action
 	ui.args.action()
