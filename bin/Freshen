@@ -430,6 +430,7 @@ def reportBug(exc_info):
     doing when the error occurred.
 """)
 	sys.stderr.write(Screen.colours['normal'])
+	exit(2)
 
 try:
 	goboPrograms = getGoboVariable('goboPrograms')
