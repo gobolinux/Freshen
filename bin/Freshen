@@ -70,7 +70,8 @@ class FreshenUI(object):
 			                               skipSet=self.args.skipSet,
 			                               noCache=self.args.noCache,
 			                               forceCache=self.args.forceCache,
-			                               types=self.args.types)
+			                               types=self.args.types,
+			                               noRevisions=self.args.noRevisions)
 
 	def showUpdates(self):
 		self.initFreshen()
