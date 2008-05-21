@@ -91,28 +91,28 @@ class FreshenUI(object):
 					puts("[  ] Program%sInstalled" %
 					     (' ' * (Screen.width - 21)))
 				# Keep track of how many of each type and in total there are
-				typeCount[update[3]] += 1
+				typeCount[update.type] += 1
 				typeCount['total'] += 1
 				
 				# Remember if there are updates to system tools
-				if update[0] in systemUpgrades:
-					systemUpgrades[update[0]] = update[3]
+				if update.program in systemUpgrades:
+					systemUpgrades[update.program] = update.type
 				
-				if (update[3] == 'recipe' and
-					self.freshen.latestInstalled(update[0])
+				if (update.type == 'recipe' and
+					self.freshen.latestInstalled(update.program)
 					and os.path.exists(self.goboPrograms + '/'
-										+ update[0] +
+										+ update.program +
 										'/Current/Resources/UseFlags')):
 					try:
 						currentFlags = set(open(
 												self.goboPrograms +
-												'/' + update[0] +
+												'/' + update.program +
 												'/Current/Resources/UseFlags')
 											.readline().split())
 					except:
 						Log_Error('Resources/UseFlags data file for '
 						          'installed %s exists but is not '
-								  'readable.' % (update[0]), 'Freshen')
+								  'readable.' % (update.program), 'Freshen')
 				else:
 					currentFlags = set()
 				
@@ -152,9 +152,8 @@ class FreshenUI(object):
 
 	def outProg(self, update, typeCount=None, currentFlags=set()):
 		(program, version, revision, type, url, intBy, enabledFlags,
-		 disabledFlags, activeFlags) = update
+		 disabledFlags, activeFlags) = update.tuple9()
 		ver = Join_Version_Revision(version, revision)
-		
 		# Initialise default values (uninstalled program)
 		insVer = "None"
 		pcol = Screen.colours['darkgreybg']
@@ -259,9 +258,8 @@ class FreshenUI(object):
 		ulist = []
 		last = ('missing' == self.args.mode and not self.args.examineSet)
 		try:
-			for update in self.freshen.updates(last=last):
-				(program, version, revision, type, url, intBy, enabledFlags,
-					disabledFlags, activeFlags) = update
+			for u in self.freshen.updates(last=last):
+				program,version,revision = u.program,u.version,u.revision
 				i += 1
 				programs.add(program)
 				ver = Join_Version_Revision(version, revision)
@@ -275,9 +273,9 @@ class FreshenUI(object):
 					       (i, self.freshen.updateCount, program, ver)
 				sys.stderr.write("\033]2;%s\007" % (msg))
 				Log_Normal(msg, 'Freshen')
-				self.outProg(update)
-				self.freshen.installUpdate(update)
-				ulist.append(update)
+				self.outProg(u)
+				self.freshen.installUpdate(u)
+				ulist.append(u)
 				rec = (os.popen('GetRecipe %s %s' % (program, ver))
 				       .readline().strip() + '/Recipe')
 				if os.path.exists(rec):
@@ -307,10 +305,9 @@ class FreshenUI(object):
 			exc_type, exc_obj, exc_tb = sys.exc_info()
 			Log_Error(exc_obj.message, 'Freshen')
 		finally:
-			for (program, version, revision, type, url, intBy,
-				 enabledFlags, disabledFlags, activeFlags) in ulist:
-				if os.system("UpdateSettings -c " + program):
-					os.system("UpdateSettings -a " + program)
+			for upd in ulist:
+				if os.system("UpdateSettings -c " + upd.program):
+					os.system("UpdateSettings -a " + upd.program)
 			if postMessages:
 				Log_Normal("Some of the installed programs requested "
 				           "post-install messages be displayed:")
