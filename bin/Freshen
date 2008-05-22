@@ -29,7 +29,7 @@ from PythonUtils       import *
 from TTYUtils          import *
 
 import Freshen
-import FreshenArgParser
+import Freshen.ArgParser as argparser
 
 def getTypeAbbr(type):
 	try:
@@ -52,7 +52,7 @@ class FreshenUI(object):
 	goboPrograms = getGoboVariable('goboPrograms')
 	
 	def __init__(self):
-		self.args = FreshenArgParser.FreshenArgParser(self)
+		self.args = argparser.FreshenArgParser(self)
 		self.limit = self.args.limit
 		self.freshen = None
 		self.initTime = time.time()
