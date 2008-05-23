@@ -54,7 +54,6 @@ class FreshenUI(object):
 	def __init__(self):
 		self.args = argparser.FreshenArgParser(self)
 		self.limit = self.args.limit
-		self.freshen = None
 		self.initTime = time.time()
 
 	def error(self, message):
@@ -63,18 +62,21 @@ class FreshenUI(object):
 	def log(self, message):
 		Log_Normal(message, 'Freshen')
 
-	def initFreshen(self):
-		if not self.freshen:
-			self.freshen = Freshen.Freshen(mode=self.args.mode,
-			                               examineSet=self.args.examineSet,
-			                               skipSet=self.args.skipSet,
-			                               noCache=self.args.noCache,
-			                               forceCache=self.args.forceCache,
-			                               types=self.args.types,
-			                               noRevisions=self.args.noRevisions)
-
+	def updates(self, examineSet, onExamine=None, last=False):
+		req = Freshen.FreshenRequest(
+								mode=self.args.mode,
+								examineSet=examineSet,
+								skipSet=self.args.skipSet,
+								noCache=self.args.noCache,
+								forceCache=self.args.forceCache,
+								types=tuple(self.args.types),
+								noRevisions=self.args.noRevisions,
+								onExamine=onExamine,
+								last=last)
+		return req
+		#return Freshen.updates(req)
+	
 	def showUpdates(self):
-		self.initFreshen()
 		systemUpgrades = {'Scripts': None, 'Compile': None, 'Freshen': None}
 		typeCount = {
 			'recipe': 0,
@@ -82,10 +84,15 @@ class FreshenUI(object):
 			'_binary_recipe': 0 ,
 			'total': 0
 			}
-		pb = ProgressBar(len(self.freshen.examineSet) + 1, self.limit, True)
+		examineSet = self.args.examineSet
+		types = tuple(self.args.types)
+		if not examineSet:
+			examineSet = frozenset(prog for prog in
+				Freshen.installedPrograms() if
+				Freshen.updateAvailable(prog, types, self.args.noRevisions))
+		pb = ProgressBar(len(examineSet) + 1, self.limit, True)
 		try:
-			updates = self.freshen.updates(onExamine=pb.inc)
-			for update in updates:
+			for update in self.updates(examineSet, onExamine=pb.inc):
 				# Only output heading the first time, if there are any.
 				if typeCount['total']==0:
 					puts("[  ] Program%sInstalled" %
@@ -99,7 +106,7 @@ class FreshenUI(object):
 					systemUpgrades[update.program] = update.type
 				
 				if (update.type == 'recipe' and
-					self.freshen.latestInstalled(update.program)
+					Freshen.latestInstalled(update.program)
 					and os.path.exists(self.goboPrograms + '/'
 										+ update.program +
 										'/Current/Resources/UseFlags')):
@@ -158,7 +165,7 @@ class FreshenUI(object):
 		insVer = "None"
 		pcol = Screen.colours['darkgreybg']
 		
-		insVer = str(self.freshen.latestInstalled(program))
+		insVer = str(Freshen.latestInstalled(program))
 		if insVer != 'None':
 			# Alternate colouring by row for easier reading
 			if typeCount and typeCount['total'] % 2 == 0:
@@ -250,15 +257,21 @@ class FreshenUI(object):
 		return t.safe_substitute(variableDefinitions)
 
 	def installUpdates(self):
-		self.initFreshen()
 		i = 0
 		postMessages = []
 		programs = set()
 		error = None
 		ulist = []
 		last = ('missing' == self.args.mode and not self.args.examineSet)
+		types = tuple(self.args.types)
+		examineSet = self.args.examineSet
+		if not examineSet:
+			examineSet = frozenset(prog for prog in
+				Freshen.installedPrograms() if
+				Freshen.updateAvailable(prog, types, self.args.noRevisions))
 		try:
-			for u in self.freshen.updates(last=last):
+			updates = self.updates(examineSet, last=last)
+			for u in updates:
 				program,version,revision = u.program,u.version,u.revision
 				i += 1
 				programs.add(program)
@@ -268,13 +281,15 @@ class FreshenUI(object):
 				# (meaning the standard review-then-install method
 				# was used), we know how many there are and can give
 				# a better message.
-				if self.freshen.updateCount:
+				if updates.updateCount:
+					if not self.limit or self.limit > updates.updateCount:
+						self.limit = updates.updateCount
 					msg = "Installing update %i/%i: %s %s" % \
-					       (i, self.freshen.updateCount, program, ver)
+					       (i, self.limit, program, ver)
 				sys.stderr.write("\033]2;%s\007" % (msg))
 				Log_Normal(msg, 'Freshen')
 				self.outProg(u)
-				self.freshen.installUpdate(u)
+				Freshen.installUpdate(u)
 				ulist.append(u)
 				rec = (os.popen('GetRecipe %s %s' % (program, ver))
 				       .readline().strip() + '/Recipe')
@@ -313,7 +328,7 @@ class FreshenUI(object):
 				           "post-install messages be displayed:")
 				for program,message in postMessages:
 					puts("%s: %s" % (program, message))
-			self.freshen.clearCache()
+			Freshen.clearCache()
 		if error:
 			Log_Error("Because there was an error in installation, not "
 			          "all of your updates may have been installed. "
