@@ -63,18 +63,16 @@ class FreshenUI(object):
 		Log_Normal(message, 'Freshen')
 
 	def updates(self, examineSet, onExamine=None, last=False):
-		req = Freshen.FreshenRequest(
-								mode=self.args.mode,
-								examineSet=examineSet,
-								skipSet=self.args.skipSet,
-								noCache=self.args.noCache,
-								forceCache=self.args.forceCache,
-								types=tuple(self.args.types),
-								noRevisions=self.args.noRevisions,
-								onExamine=onExamine,
-								last=last)
+		req = Freshen.Request(mode=self.args.mode,
+		                      examineSet=examineSet,
+		                      skipSet=self.args.skipSet,
+		                      noCache=self.args.noCache,
+		                      forceCache=self.args.forceCache,
+		                      types=tuple(self.args.types),
+		                      noRevisions=self.args.noRevisions,
+		                      onExamine=onExamine,
+		                      last=last)
 		return req
-		#return Freshen.updates(req)
 	
 	def showUpdates(self):
 		systemUpgrades = {'Scripts': None, 'Compile': None, 'Freshen': None}
