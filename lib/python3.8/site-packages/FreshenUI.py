@@ -1,6 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Freshen - finds and installs updates for GoboLinux systems.
 # Copyright (C) 2007-2008 Michael Homer <=mwh>
+# Copyright (C) 2024 Sage I. Hendricks <sage.message@email.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
